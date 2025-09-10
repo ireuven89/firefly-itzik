@@ -2,14 +2,6 @@
 
 A high-performance Go application that scrapes articles from Engadget, extracts text content, and analyzes word frequencies using a word bank filter.
 
-## Features
-
-- **Concurrent Web Scraping**: Fetches multiple articles simultaneously with configurable worker pools
-- **Smart HTML Parsing**: Extracts clean article content while filtering out navigation, ads, and other noise
-- **Rate Limiting**: Respectful scraping with configurable request rate limits
-- **Word Frequency Analysis**: Counts and ranks words using a comprehensive word bank
-- **Configurable**: All parameters can be customized via environment variables
-- **Error Resilient**: Retry mechanisms and graceful error handling
 
 ## Prerequisites
 
@@ -68,7 +60,6 @@ Run with default settings:
 
 The application supports extensive configuration through environment variables. All environment variables are prefixed with `APP_` to avoid conflicts with other applications:
 
-**Environment Variable Prefix:** `APP_`
 
 #### File Paths
 - `APP_ESSAYS_FILE`: Path to file containing article URLs (default: `endg-urls`)
@@ -209,21 +200,6 @@ The application includes comprehensive error handling:
 - Graceful handling of 404 errors
 - Context-based cancellation
 - Detailed error reporting
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
-
-## License
-
-[Add your license information here]
-
-## Troubleshooting
 
 ### Common Issues
 
