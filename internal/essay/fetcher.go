@@ -15,21 +15,19 @@ import (
 	"time"
 )
 
-const (
-	maxWorkers = 200
-)
-
 type EssayFetcher interface {
 	StreamEssays(ctx context.Context, essayStream chan<- models.Essay, errorChan chan<- error) error
 }
 
 type essayFetcher struct {
-	client      *http.Client
-	rateLimiter rateLimiter.RateLimiter
-	filePath    string
+	client        *http.Client
+	rateLimiter   rateLimiter.RateLimiter
+	filePath      string
+	maxWorkers    int
+	retryDelay    time.Duration
 }
 
-func NewEssayFetcher(rateLimiter rateLimiter.RateLimiter, filePath string) EssayFetcher {
+func NewEssayFetcher(rateLimiter rateLimiter.RateLimiter, filePath string, maxWorkers int, retryDelay time.Duration) EssayFetcher {
 	transport := &http.Transport{
 		MaxIdleConns:          500,
 		MaxIdleConnsPerHost:   100,
@@ -47,6 +45,8 @@ func NewEssayFetcher(rateLimiter rateLimiter.RateLimiter, filePath string) Essay
 		},
 		rateLimiter: rateLimiter,
 		filePath:    filePath,
+		maxWorkers:  maxWorkers,
+		retryDelay:  retryDelay,
 	}
 }
 
@@ -58,12 +58,12 @@ func (ef *essayFetcher) StreamEssays(ctx context.Context, essayStream chan<- mod
 	}
 
 	// Create channel for workers
-	urlChan := make(chan string, maxWorkers)
+	urlChan := make(chan string, ef.maxWorkers)
 
 	// Start workers
 	var wg sync.WaitGroup
-	numWorkers := maxWorkers
-	if len(essayURLs) < maxWorkers {
+	numWorkers := ef.maxWorkers
+	if len(essayURLs) < ef.maxWorkers {
 		numWorkers = len(essayURLs)
 	}
 
@@ -146,7 +146,7 @@ func (ef *essayFetcher) fetchSingleEssay(ctx context.Context, url string) (*mode
 			return nil, fmt.Errorf("essay %s returned status 404 (not found)", url)
 		}
 		if attempt < maxRetries-1 {
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(ef.retryDelay)
 		}
 	}
 

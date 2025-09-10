@@ -21,11 +21,11 @@ func main() {
 
 	// Initialize components
 	rateLimiter := rateLimiter2.NewRateLimiter(cfg.RateLimit, time.Second)
-	essayFetcher := essay.NewEssayFetcher(rateLimiter, cfg.EssaysFile)
+	essayFetcher := essay.NewEssayFetcher(rateLimiter, cfg.EssaysFile, cfg.MaxHTTPWorkers, cfg.HTTPRetryDelay)
 	wordBank := wordbank.NewWordBank(cfg.WordBankFile)
 	wordProcessor := processor.NewWordProcessor(wordBank)
-	essayStream := make(chan models.Essay, 20) // Small buffer
-	errorChan := make(chan error, 100)
+	essayStream := make(chan models.Essay, cfg.EssayStreamBuffer)
+	errorChan := make(chan error, cfg.ErrorChannelBuffer)
 
 	// Start streaming essays
 	go func() {
@@ -38,7 +38,7 @@ func main() {
 	}()
 
 	// Process essays as they stream
-	topWords, totalEssays, totalErrors := wordProcessor.ProcessEssayStream(ctx, essayStream, errorChan, 10)
+	topWords, totalEssays, totalErrors := wordProcessor.ProcessEssayStream(ctx, essayStream, errorChan, cfg.TopWordsCount)
 
 	if totalErrors > 0 {
 		log.Printf("Warning: %d errors occurred", totalErrors)
